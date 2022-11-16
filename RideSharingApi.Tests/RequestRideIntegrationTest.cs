@@ -1,4 +1,5 @@
 ﻿using Alba;
+using Baseline.Dates;
 using Microsoft.Extensions.Hosting;
 using Oakton;
 using RideSharingApi.Domain;
@@ -88,4 +89,22 @@ public class RequestRideIntegrationTest : IClassFixture<AppFixture>
         session.Received.SingleMessage<NotifyDriversCommand>()
             .Ride.Id.ShouldBe(rideId);
     }
+
+    [Fact]
+    public async Task call_the_web_service()
+    {
+        var starting = new Location(30.266666, -97.733330);
+        var ending = new Location(30.2668, -97.73355);
+
+        var rideId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var command = new RequestRide(rideId, customerId, starting, ending);
+
+        // I'm using Alba to exercise the HTTP endpoint because this is easier
+        // to demo in a presentation that me clicking around on a Swagger screen
+        await _fixture.Host
+            .Scenario(x => x.Post.Json(command).ToUrl("/ride/request"));
+    }
+    
+    
 }

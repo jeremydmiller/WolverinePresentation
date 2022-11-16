@@ -1,5 +1,6 @@
 ﻿using Marten;
 using RideSharingMessages;
+using Wolverine;
 using Wolverine.Attributes;
 
 namespace RideSharingApi.Domain;
@@ -30,7 +31,7 @@ namespace RideSharingApi.Domain;
 //         
 //         _session.Store(ride);
 //
-//         // These two things need to succeed or fail together
+//         // More on these two lines of code in a bit, because thar be dragons!
 //         await _publisher.EnqueueAsync(new RideRequested(ride.Id));
 //         await _session.SaveChangesAsync(cancellation);
 //     }

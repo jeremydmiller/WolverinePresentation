@@ -30,7 +30,7 @@ public class RideDbContext : DbContext
 
 public class RequestRideController : ControllerBase
 {
-    [HttpPost("/ride/request")]
+    [HttpPost("/ride/request2")]
     public async Task Post(
         [FromBody] RequestRide command,
         [FromServices] IDbContextOutbox<RideDbContext> outbox)

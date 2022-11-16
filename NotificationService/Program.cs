@@ -1,5 +1,7 @@
 using Marten;
 using Oakton;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Wolverine;
 using Wolverine.RabbitMQ;
 
@@ -28,6 +30,20 @@ public static class Program
                     var connectionString = context.Configuration.GetConnectionString("marten");
                     opts.Connection(connectionString);
                     opts.DatabaseSchemaName = "ride_sharing";
+                });
+                
+                opts.Services.AddOpenTelemetryTracing(x =>
+                {
+                    x.SetResourceBuilder(ResourceBuilder
+                            .CreateDefault()
+                            .AddService("NotificationService")) // <-- sets service name
+
+                        .AddJaegerExporter()
+                        .AddAspNetCoreInstrumentation()
+
+                        // This is absolutely necessary to collect the Wolverine
+                        // open telemetry tracing information in your application
+                        .AddSource("Wolverine");
                 });
             });
     }
