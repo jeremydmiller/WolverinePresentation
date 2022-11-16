@@ -20,8 +20,8 @@ public class DriverLocator : IDriverLocator
 public static class RideRequestedHandler
 {
     public static async Task<NotifyDriversCommand> Handle(
-        RideRequested @event, 
-        IQuerySession session, 
+        RideRequested @event,
+        IQuerySession session,
         IDriverLocator locator)
     {
         var ride = await session.LoadAsync<Ride>(@event.RideId);

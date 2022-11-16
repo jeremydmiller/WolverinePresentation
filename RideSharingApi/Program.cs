@@ -1,7 +1,9 @@
 using Marten;
+using Marten.Events.Projections;
 using Oakton;
 using Oakton.Resources;
 using RideSharingApi.Domain;
+using RideSharingMessages;
 using Wolverine;
 using Wolverine.Marten;
 using Wolverine.RabbitMQ;
@@ -15,18 +17,34 @@ builder.Services.AddScoped<IDriverLocator, DriverLocator>();
 // That's it for now
 builder.Host.UseWolverine(opts =>
 {
-    // TODO -- Jeremy needs to get rid of this
+    // TODO -- Sigh, bug, necessary for testing. Jeremy needs to get rid of this
     opts.ApplicationAssembly = typeof(Program).Assembly;
+
+    opts.UseRabbitMq()
+        .AutoProvision()
+        .AutoPurgeOnStartup()  // Strictly for testing
+        .UseConventionalRouting()
+        .ConfigureSenders(x => x.UseDurableOutbox());
+
+    // Explicit routing
+    opts.PublishMessage<RideAccepted>().ToRabbitQueue("ride-accepted");
 });
 
 builder.Services.AddMarten(opts =>
-{
-    opts.Connection(builder.Configuration.GetConnectionString("marten"));
-    opts.DatabaseSchemaName = "ride_sharing";
-})
-    
+    {
+        opts.Connection(builder.Configuration.GetConnectionString("marten"));
+        opts.DatabaseSchemaName = "ride_sharing";
+
+        opts.Projections
+            .SelfAggregate<DriverShift>(ProjectionLifecycle.Inline);
+    })
+
     // This adds Marten middleware support and uses Postgresql for the outbox
-    .IntegrateWithWolverine();
+    .IntegrateWithWolverine()
+    
+    // Automatically publish events in Marten that have an active
+    // subscription
+    .EventForwardingToWolverine();
 
 
 builder.Services.AddResourceSetupOnStartup();

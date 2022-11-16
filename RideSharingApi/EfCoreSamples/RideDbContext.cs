@@ -9,7 +9,7 @@ namespace RideSharingApi.EfCoreSamples;
 public class RideDbContext : DbContext
 {
     public DbSet<Ride> Rides { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Ride>(map =>
@@ -20,7 +20,7 @@ public class RideDbContext : DbContext
             var starting = map.OwnsOne(x => x.Starting);
             starting.Property(x => x.Latitude).HasColumnName("starting_latitude");
             starting.Property(x => x.Longitude).HasColumnName("starting_longitude");
-            
+
             var ending = map.OwnsOne(x => x.Ending);
             ending.Property(x => x.Latitude).HasColumnName("ending_latitude");
             ending.Property(x => x.Longitude).HasColumnName("ending_longitude");

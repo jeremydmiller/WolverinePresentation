@@ -1,6 +1,5 @@
 ﻿using Marten;
 using RideSharingMessages;
-using Wolverine;
 using Wolverine.Attributes;
 
 namespace RideSharingApi.Domain;
@@ -37,15 +36,13 @@ namespace RideSharingApi.Domain;
 //     }
 // }
 
-
-
 public static class RequestRideHandler
 {
     [Transactional]
     public static RideRequested Handle(RequestRide command, IDocumentSession session)
     {
         // TODO -- we'll add some validation later
-        
+
         var ride = new Ride
         {
             Starting = command.Starting,
@@ -53,7 +50,7 @@ public static class RequestRideHandler
             CustomerId = command.CustomerId,
             Id = command.RideId
         };
-        
+
         session.Store(ride);
 
         return new RideRequested(ride.Id);

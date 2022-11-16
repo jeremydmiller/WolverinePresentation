@@ -3,20 +3,32 @@ using Oakton;
 using Wolverine;
 using Wolverine.RabbitMQ;
 
-return await Host.CreateDefaultBuilder(args)
-    .UseWolverine((context, opts) =>
+namespace NotificationService;
+
+public static class Program
+{
+    public static Task<int> Main(string[] args)
     {
-        opts.UseRabbitMq()
-            .AutoProvision()
-            .UseConventionalRouting();
+        return ConfigureHostBuilder(args).RunOaktonCommands(args);
+    }
 
-        opts.Services.AddMarten(opts =>
-        {
-            var connectionString = context.Configuration.GetConnectionString("marten");
-            opts.Connection(connectionString);
-            opts.DatabaseSchemaName = "ride_sharing";
-        });
+    public static IHostBuilder ConfigureHostBuilder(string[] args)
+    {
+        return Host.CreateDefaultBuilder(args)
+            .UseWolverine((context, opts) =>
+            {
+                opts.ApplicationAssembly = typeof(Program).Assembly;
+                
+                opts.UseRabbitMq()
+                    .AutoProvision()
+                    .UseConventionalRouting();
 
-
-    })
-    .RunOaktonCommands(args);
+                opts.Services.AddMarten(opts =>
+                {
+                    var connectionString = context.Configuration.GetConnectionString("marten");
+                    opts.Connection(connectionString);
+                    opts.DatabaseSchemaName = "ride_sharing";
+                });
+            });
+    }
+}

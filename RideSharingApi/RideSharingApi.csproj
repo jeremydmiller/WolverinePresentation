@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RideSharingDomain\RideSharingDomain.csproj" />
+        <ProjectReference Include="..\RideSharingDomain\RideSharingDomain.csproj" />
     </ItemGroup>
 
 </Project>

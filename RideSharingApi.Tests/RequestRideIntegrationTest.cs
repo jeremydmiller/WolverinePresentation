@@ -1,10 +1,9 @@
 ﻿using Alba;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Oakton;
 using RideSharingApi.Domain;
 using RideSharingMessages;
 using Shouldly;
-using Wolverine.Runtime;
 using Wolverine.Tracking;
 using Xunit;
 using Xunit.Abstractions;
@@ -14,7 +13,7 @@ namespace RideSharingApi.Tests;
 public class AppFixture : IAsyncLifetime
 {
     public IAlbaHost Host { get; private set; }
-    
+
     public async Task InitializeAsync()
     {
         OaktonEnvironment.AutoStartHost = true;
@@ -39,7 +38,7 @@ public class RequestRideIntegrationTest : IClassFixture<AppFixture>
     }
 
     [Fact]
-    public async Task request_a_ride()
+    public async Task request_a_ride_within_one_process()
     {
         var starting = new Location(30.266666, -97.733330);
         var ending = new Location(30.2668, -97.73355);
@@ -51,13 +50,42 @@ public class RequestRideIntegrationTest : IClassFixture<AppFixture>
         // Wolverine test helpers
         var session = await _fixture.Host
             .InvokeMessageAndWaitAsync(command);
-        
+
         // Should have published a RideRequested event
         session.Sent.SingleMessage<RideRequested>()
             .RideId.ShouldBe(rideId);
-        
+
         // Should have cascaded, and then spawned a NotifyDriversCommand message
         session.Sent.SingleMessage<NotifyDriversCommand>()
+            .Ride.Id.ShouldBe(rideId);
+    }
+
+    [Fact]
+    public async Task request_a_ride_across_processes()
+    {
+        using var notificationService = await NotificationService.Program
+            .ConfigureHostBuilder(Array.Empty<string>())
+            .StartAsync();
+        
+        var starting = new Location(30.266666, -97.733330);
+        var ending = new Location(30.2668, -97.73355);
+
+        var rideId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var command = new RequestRide(rideId, customerId, starting, ending);
+
+        // Wolverine test helpers
+        var session = await _fixture.Host
+            .TrackActivity()
+            .AlsoTrack(notificationService)
+            .InvokeMessageAndWaitAsync(command);
+
+        // Should have published a RideRequested event
+        session.Sent.SingleMessage<RideRequested>()
+            .RideId.ShouldBe(rideId);
+
+        // Should have cascaded, and then spawned a NotifyDriversCommand message
+        session.Received.SingleMessage<NotifyDriversCommand>()
             .Ride.Id.ShouldBe(rideId);
     }
 }
