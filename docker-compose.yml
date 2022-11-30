@@ -1,23 +1,41 @@
 version: '3'
 services:
   postgresql:
-    image: "clkao/postgres-plv8:latest"
+    image: clkao/postgres-plv8:latest
     ports:
-     - "5433:5432"
+     - 5433:5432
     environment:
-      - POSTGRES_DATABASE=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-  
-  rabbitmq:
-    image: "rabbitmq:3-management"
-    ports:
-     - "5672:5672"
-     - "15672:15672"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DATABASE: postgres
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
 
-  jaeger:
+  pgadmin: # UI: http://localhost:5050/browser/
+    image: dpage/pgadmin4:6.16
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - ${PGADMIN_PORT:-5050}:80
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+
+  rabbitmq: # UI: http://guest:guest@localhost:15672/
+    image: rabbitmq:3-management
+    ports:
+     - 5672:5672
+     - 15672:15672
+
+  jaeger: # UI: http://localhost:16686/
       image: jaegertracing/all-in-one:latest
-      hostname: "jaeger"
+      hostname: jaeger
       ports:
-          - "6831:6831/udp"
-          - "16686:16686"
+          - 6831:6831/udp
+          - 16686:16686
+
+volumes:
+    postgres:
+    pgadmin:
